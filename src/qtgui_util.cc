@@ -21,21 +21,20 @@
  */
 
 #include "utils.h"
+
 #include <QDebug>
 #include <QSizePolicy>
 
 QwtPickerDblClickPointMachine::QwtPickerDblClickPointMachine()
 #if QWT_VERSION < 0x060000
-    : QwtPickerMachine ()
+	: QwtPickerMachine()
 #else
-    : QwtPickerMachine (PointSelection)
+	: QwtPickerMachine(PointSelection)
 #endif
 {
 }
 
-QwtPickerDblClickPointMachine::~QwtPickerDblClickPointMachine()
-{
-}
+QwtPickerDblClickPointMachine::~QwtPickerDblClickPointMachine() {}
 
 #if QWT_VERSION < 0x060000
 #define CMDLIST_TYPE QwtPickerMachine::CommandList
@@ -44,72 +43,61 @@ QwtPickerDblClickPointMachine::~QwtPickerDblClickPointMachine()
 #endif
 CMDLIST_TYPE
 QwtPickerDblClickPointMachine::transition(const QwtEventPattern &eventPattern,
-					  const QEvent *e)
-{
-  CMDLIST_TYPE cmdList;
-  switch(e->type()) {
-    case QEvent::MouseButtonDblClick:
-      if ( eventPattern.mouseMatch(QwtEventPattern::MouseSelect1,
-				   (const QMouseEvent *)e) ) {
-	cmdList += QwtPickerMachine::Begin;
-	cmdList += QwtPickerMachine::Append;
-	cmdList += QwtPickerMachine::End;
-      }
-      break;
-  default:
-    break;
-  }
-  return cmdList;
+					  const QEvent *e) {
+	CMDLIST_TYPE cmdList;
+	switch (e->type()) {
+	case QEvent::MouseButtonDblClick:
+		if (eventPattern.mouseMatch(QwtEventPattern::MouseSelect1,
+					    (const QMouseEvent *)e)) {
+			cmdList += QwtPickerMachine::Begin;
+			cmdList += QwtPickerMachine::Append;
+			cmdList += QwtPickerMachine::End;
+		}
+		break;
+	default:
+		break;
+	}
+	return cmdList;
 }
 
 #if QWT_VERSION < 0x060100
-QwtDblClickPlotPicker::QwtDblClickPlotPicker(QwtPlotCanvas* canvas)
-#else /* QWT_VERSION < 0x060100 */
-QwtDblClickPlotPicker::QwtDblClickPlotPicker(QWidget* canvas)
+QwtDblClickPlotPicker::QwtDblClickPlotPicker(QwtPlotCanvas *canvas)
+#else  /* QWT_VERSION < 0x060100 */
+QwtDblClickPlotPicker::QwtDblClickPlotPicker(QWidget *canvas)
 #endif /* QWT_VERSION < 0x060100 */
-  : QwtPlotPicker(canvas)
-{
+	: QwtPlotPicker(canvas) {
 #if QWT_VERSION < 0x060000
-  setSelectionFlags(QwtPicker::PointSelection);
+	setSelectionFlags(QwtPicker::PointSelection);
 #endif
 }
 
-QwtDblClickPlotPicker::~QwtDblClickPlotPicker()
-{
+QwtDblClickPlotPicker::~QwtDblClickPlotPicker() {}
+
+QwtPickerMachine *QwtDblClickPlotPicker::stateMachine(int n) const {
+	return new QwtPickerDblClickPointMachine;
 }
 
-QwtPickerMachine*
-QwtDblClickPlotPicker::stateMachine(int n) const
-{
-  return new QwtPickerDblClickPointMachine;
-}
-
-void Util::retainWidgetSizeWhenHidden(QWidget *w, bool retain)
-{
+void Util::retainWidgetSizeWhenHidden(QWidget *w, bool retain) {
 	QSizePolicy sp_retain = w->sizePolicy();
 	sp_retain.setRetainSizeWhenHidden(retain);
 	w->setSizePolicy(sp_retain);
 }
 
-void Util::setWidgetNrOfChars(QWidget *w,
-		int minNrOfChars, int maxNrOfChars)
-{
+void Util::setWidgetNrOfChars(QWidget *w, int minNrOfChars, int maxNrOfChars) {
 	QFontMetrics labelm(w->font());
 
-	auto label_min_width = labelm.width(QString(minNrOfChars,'X'));
+	auto label_min_width = labelm.width(QString(minNrOfChars, 'X'));
 	w->setMinimumWidth(label_min_width);
 
-	if (maxNrOfChars!=0) {
-		auto label_max_width = labelm.width(QString(maxNrOfChars,'X'));
+	if (maxNrOfChars != 0) {
+		auto label_max_width = labelm.width(QString(maxNrOfChars, 'X'));
 		w->setMaximumWidth(label_max_width);
 	}
 }
 
-void Util::loadStylesheetFromFile(QString path, QWidget *widget)
-{
+void Util::loadStylesheetFromFile(QString path, QWidget *widget) {
 	QFile file(path);
 	file.open(QFile::ReadOnly);
 	QString stylesheet = QString::fromLatin1(file.readAll());
 	widget->setStyleSheet(stylesheet);
 }
-

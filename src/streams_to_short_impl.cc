@@ -21,47 +21,40 @@
  */
 
 #include "streams_to_short_impl.h"
-#include <gnuradio/io_signature.h>
+
 #include <gnuradio/blocks/char_to_short.h>
+#include <gnuradio/io_signature.h>
 
 using namespace gr;
 
-namespace adiscope
-{
-    streams_to_short_impl::streams_to_short_impl(size_t _itemsize,
-						size_t _nstreams)
+namespace adiscope {
+streams_to_short_impl::streams_to_short_impl(size_t _itemsize, size_t _nstreams)
 	: sync_block("streams_to_short",
-		io_signature::make(_nstreams, _nstreams, sizeof(uint16_t)),
-                io_signature::make (1, 1, sizeof(uint16_t))),
-	d_nstreams(_nstreams),
-        d_itemsize(_itemsize)
-    {
-    }
+		     io_signature::make(_nstreams, _nstreams, sizeof(uint16_t)),
+		     io_signature::make(1, 1, sizeof(uint16_t))),
+	  d_nstreams(_nstreams), d_itemsize(_itemsize) {}
 
-    streams_to_short::sptr
-    streams_to_short::make(size_t itemsize, size_t nstreams)
-    {
-        return gnuradio::get_initial_sptr
-		(new streams_to_short_impl(itemsize, nstreams));
-    }
-
-    int
-    streams_to_short_impl::work(int noutput_items,
-                       gr_vector_const_void_star &input_items,
-                       gr_vector_void_star &output_items)
-    {
-        uint16_t *out = (uint16_t*) output_items[0];
-        uint16_t v;
-        uint16_t d_value;
-
-        for(int i = 0; i < noutput_items; i++) {
-            d_value = 0;
-            for(int j = 0; j < d_nstreams; j++) {
-                const uint16_t *inv = (const uint16_t *) input_items[j];
-                d_value |= (inv[j] << j);
-            }
-            out[i] = d_value;
-        }
-        return noutput_items;
-    }
+streams_to_short::sptr streams_to_short::make(size_t itemsize,
+					      size_t nstreams) {
+	return gnuradio::get_initial_sptr(
+		new streams_to_short_impl(itemsize, nstreams));
 }
+
+int streams_to_short_impl::work(int noutput_items,
+				gr_vector_const_void_star &input_items,
+				gr_vector_void_star &output_items) {
+	uint16_t *out = (uint16_t *)output_items[0];
+	uint16_t v;
+	uint16_t d_value;
+
+	for (int i = 0; i < noutput_items; i++) {
+		d_value = 0;
+		for (int j = 0; j < d_nstreams; j++) {
+			const uint16_t *inv = (const uint16_t *)input_items[j];
+			d_value |= (inv[j] << j);
+		}
+		out[i] = d_value;
+	}
+	return noutput_items;
+}
+} // namespace adiscope
