@@ -3,6 +3,7 @@
 
 #include "config.h"
 
+#include <QApplication>
 #include <QtGlobal>
 
 #define __STDC_FORMAT_MACROS

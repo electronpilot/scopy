@@ -1,6 +1,5 @@
 #include "scopyApplication.hpp"
 
-#include <QApplication>
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
