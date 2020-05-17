@@ -1563,13 +1563,13 @@ I2CPattern::I2CPattern()
 
 uint32_t I2CPattern::get_min_sampling_freq()
 {
-	return clkFrequency * (2);
+	return clkFrequency * (4);
 }
 
 uint32_t I2CPattern::get_required_nr_of_samples(uint32_t sample_rate,
 		uint32_t number_of_channels)
 {
-	auto samples_per_bit = 2*(sample_rate/clkFrequency);
+	auto samples_per_bit = 4*(sample_rate/clkFrequency);
 	auto IFS=interFrameSpace*samples_per_bit;
 
 	// size = samples/bit * (IFS+start(2), address(7), ack(1), (data(8) + ack(1))*data_len, stop(2)+IFS)
@@ -1580,12 +1580,25 @@ uint32_t I2CPattern::get_required_nr_of_samples(uint32_t sample_rate,
 
 void I2CPattern::sample_bit(bool bit)
 {
-	for (auto i=0; i<samples_per_bit/2; i++,buf_ptr++) {
+	// SDA Transitions must occur when SCL is LOW (unless starting or stopping)
+	// Set SDA whilst SCL is low from previous bit
+	for (auto i=0; i<samples_per_bit/4; i++,buf_ptr++) {
+		*buf_ptr = changeBit(*buf_ptr,SDA,bit);
+		*buf_ptr = changeBit(*buf_ptr,SCL,0);
+	}
+
+	// Sample SDA by clocking SCL
+	for (auto i=0; i<samples_per_bit/4; i++,buf_ptr++) {
 		*buf_ptr = changeBit(*buf_ptr,SDA,bit);
 		*buf_ptr = changeBit(*buf_ptr,SCL,1);
 	}
+	for (auto i=0; i<samples_per_bit/4; i++,buf_ptr++) {
+		*buf_ptr = changeBit(*buf_ptr,SDA,bit);
+		*buf_ptr = changeBit(*buf_ptr,SCL,0);
+	}
 
-	for (auto i=0; i<samples_per_bit/2; i++,buf_ptr++) {
+	// Balance samples by 4, and leave SCL low for next bit
+	for (auto i=0; i<samples_per_bit/4; i++,buf_ptr++) {
 		*buf_ptr = changeBit(*buf_ptr,SDA,bit);
 		*buf_ptr = changeBit(*buf_ptr,SCL,0);
 	}
@@ -1593,8 +1606,15 @@ void I2CPattern::sample_bit(bool bit)
 
 void I2CPattern::sample_start_bit()
 {
-	for (auto i=0; i<samples_per_bit; i++,buf_ptr++) {
+	// Explicitly set start condition, consume 2 bits
+	for (auto i=0; i<samples_per_bit/2; i++,buf_ptr++) {
+		*buf_ptr = changeBit(*buf_ptr,SDA,1);
+		*buf_ptr = changeBit(*buf_ptr,SCL,1);
+	}
+
+	for (auto i=0; i<samples_per_bit/2; i++,buf_ptr++) {
 		*buf_ptr = changeBit(*buf_ptr,SDA,0);
+		*buf_ptr = changeBit(*buf_ptr,SCL,1);
 	}
 
 	for (auto i=0; i<samples_per_bit; i++,buf_ptr++) {
@@ -1662,13 +1682,27 @@ void I2CPattern::sample_payload()
 
 void I2CPattern::sample_stop()
 {
-	for (auto i=0; i<samples_per_bit; i++,buf_ptr++) {
+	// Explicitly set stop condition, consume 2 bits
+	for (auto i=0; i<samples_per_bit/2; i++,buf_ptr++) {
 		*buf_ptr = changeBit(*buf_ptr,SDA,0);
+		*buf_ptr = changeBit(*buf_ptr,SCL,0);
 	}
 
-	for (auto i=0; i<samples_per_bit; i++,buf_ptr++) {
+	for (auto i=0; i<samples_per_bit/2; i++,buf_ptr++) {
 		*buf_ptr = changeBit(*buf_ptr,SDA,1);
+		*buf_ptr = changeBit(*buf_ptr,SCL,0);
 	}
+
+	for (auto i=0; i<samples_per_bit/2; i++,buf_ptr++) {
+		*buf_ptr = changeBit(*buf_ptr,SDA,1);
+		*buf_ptr = changeBit(*buf_ptr,SCL,1);
+	}
+
+	for (auto i=0; i<samples_per_bit/2; i++,buf_ptr++) {
+		*buf_ptr = changeBit(*buf_ptr,SDA,1);
+		*buf_ptr = changeBit(*buf_ptr,SCL,1);
+	}
+
 }
 
 uint8_t I2CPattern::generate_pattern(uint32_t sample_rate,
@@ -1680,7 +1714,7 @@ uint8_t I2CPattern::generate_pattern(uint32_t sample_rate,
 	buf_ptr = buffer;
 	memset(buffer, (0xff), (number_of_samples)*sizeof(short));
 
-	samples_per_bit = 2*(sample_rate/clkFrequency);
+	samples_per_bit = 4*(sample_rate/clkFrequency);
 	buf_ptr+=interFrameSpace*samples_per_bit;
 
 
@@ -1704,7 +1738,7 @@ I2CPatternUI::I2CPatternUI(I2CPattern *pattern,
 		{"Hz", 1E0},
 		{"kHz", 1E+3},
 		{"MHz", 1E+6}
-	}, tr("Frequency"), 1e0, PGMaxSampleRate/2,true,false,this, {1,2.5,5});
+	}, tr("Frequency"), 1e0, PGMaxSampleRate/4,true,false,this, {1,3.2,4});
 	ui->verticalLayout->insertWidget(0,frequencySpinButton);
 	setVisible(false);
 }
