@@ -1550,7 +1550,7 @@ I2CPattern::I2CPattern()
 	clkFrequency=5000;
 	msbFirst=true;
 	address=0x72;
-	samples_per_bit=1;
+	samples_per_bit=4;
 	buf_ptr=nullptr;
 	interFrameSpace=3;
 	bytesPerFrame=2;
@@ -1673,7 +1673,12 @@ void I2CPattern::sample_payload()
 		}
 
 		if (read) {
-			sample_send_ack();
+			// Last bit on a read should be NACKed
+			if (it == v.end()-1)	{
+				sample_bit(1);
+			} else {
+				sample_send_ack();
+			}
 		} else {
 			sample_await_ack();
 		}

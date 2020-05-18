@@ -45,7 +45,7 @@ install:
     - sh: docker version
 
 build_script:
-    - cmd: C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Syu"
+    - cmd: C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Syu --ignore msys2-runtime,msys2-runtime-devel"
     - cmd: set PATH=%PATH%;"C:\Program Files (x86)\Inno Setup 5"
     - cmd: "%BUILD_DEPS_CMD%"
 
