@@ -1695,7 +1695,7 @@ uint32_t I2CPattern::get_min_sampling_freq()
 uint32_t I2CPattern::get_required_nr_of_samples(uint32_t sample_rate,
 		uint32_t number_of_channels)
 {
-	auto samples_per_bit = 4*(sample_rate/clkFrequency);
+	auto samples_per_bit = 1*(sample_rate/clkFrequency);
 	auto IFS=interFrameSpace*samples_per_bit;
 
 	// size = samples/bit * (IFS+start(2), address(7), ack(1), (data(8) + ack(1))*data_len, stop(2)+IFS)
@@ -1850,7 +1850,7 @@ uint8_t I2CPattern::generate_pattern(uint32_t sample_rate,
 	buf_ptr = buffer;
 	memset(buffer, (0xff), (number_of_samples)*sizeof(short));
 
-	samples_per_bit = 4*(sample_rate/clkFrequency);
+	samples_per_bit = 1*(sample_rate/clkFrequency);
 	buf_ptr+=interFrameSpace*samples_per_bit;
 
 
